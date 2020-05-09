@@ -1,10 +1,10 @@
 # Freebox in bridge mode with a Netgear R8000 running OpenWRT
-Notes on Putting a Freebox Revolution in bridge mode with a Netgear R8000 running OpenWrt
+Notes on Putting a Freebox Revolution in bridge mode with a Netgear R8000 running OpenWrt.
 
 ## Goals
 * Install OpenWRT on the Netgear R8000
 * Put the Freebox in bridge mode
-* Full IPV6
+* Full IPv6
 * Separate guest network
 * VPN server
 * Bring back as many Freebox services as possible
@@ -14,9 +14,9 @@ Notes on Putting a Freebox Revolution in bridge mode with a Netgear R8000 runnin
 ## Before we start
 There will be a fair amount of customization, and due to how OpenWrt's upgrade process works:
 
-* When modifying a configuration file, ensure that it will be kept during sysupgrade. Add it in `/etc/sysupgrade.conf` if needed
-* Keep track of installed packages. I personnally do this with a file directly on the router, which will be retained during sysupgrade
-* Backup your configuration regularly
+* When modifying a configuration file, ensure that it will be kept during sysupgrade. Add it in `/etc/sysupgrade.conf` if needed.
+* Keep track of installed packages. I personnally do this with a file directly on the router, which will be retained during sysupgrade.
+* Backup your configuration regularly.
 
 ## Installing OpenWrt
 ### Problem
@@ -24,7 +24,7 @@ Recent firmwares do not allow downgrade below 1.0.4.12_10.1.46 nor
 reinstalling the same version:
 
 ```
-hexdump -Cn80 R8000-V1.0.4.12_10.1.46.chk
+$ hexdump -Cn80 R8000-V1.0.4.12_10.1.46.chk
                             ------>    1  0  4 12 10  1 46
 00000000  2a 23 24 5e 00 00 00 3a  01 01 00 04 0c 0a 01 2e  |*#$^...:........|
 00000010  d4 14 1a 81 00 00 00 00  01 de 60 00 00 00 00 00  |..........`.....|
@@ -35,7 +35,7 @@ hexdump -Cn80 R8000-V1.0.4.12_10.1.46.chk
 ```
 
 ```
-hexdump -Cn80 openwrt-19.07.2-bcm53xx-netgear-r8000-squashfs.chk
+$ hexdump -Cn80 openwrt-19.07.2-bcm53xx-netgear-r8000-squashfs.chk
                             ------>    1  1 99  0  0  0  0
 00000000  2a 23 24 5e 00 00 00 3a  01 01 01 63 00 00 00 00  |*#$^...:...c....|
 00000010  f7 af 87 42 00 00 00 00  00 78 00 00 00 00 00 00  |...B.....x......|
@@ -65,9 +65,9 @@ Then install the built image as usual.
 We can still control the other LEDs, but not the switch LEDs which blink on every packet. The LED kill switch on the
 back side of the router doesn't work too.
 
-**Workaround**: Duct tape
+*Workaround*: Duct tape
 #### WPS
-**Workaround**: None, and I don't care. Access to my precious Internets is worth typing a passphrase.
+*Workaround*: None, and I don't care. Access to my precious Internets is worth typing a passphrase.
 
 
 ## Networking
