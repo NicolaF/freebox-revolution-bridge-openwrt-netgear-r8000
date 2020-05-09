@@ -57,14 +57,37 @@ patch -p1 < ....
 wget  https://downloads.openwrt.org/releases/19.07.2/targets/bcm53xx/generic/config.buildinfo -O .config
 make menuconfig # Target system: `BCM47xx/53xx (ARM)`, Target profile: `Netgear R8000`
 make
-
 ```
+Then install the built image as usual.
 
 ### What doesn't work
 #### Switch LEDs control
-We can still control the other LEDs, but not the switch LEDs which blink on every packet. The LED kill switch on the back side of the router doesn't work too.
+We can still control the other LEDs, but not the switch LEDs which blink on every packet. The LED kill switch on the
+back side of the router doesn't work too.
 
 **Workaround**: Duct tape
 #### WPS
 **Workaround**: None, and I don't care. Access to my precious Internets is worth typing a passphrase.
+
+
+## Networking
+### Conventions
+| Name                   | Description                                                                         |
+|------------------------|-------------------------------------------------------------------------------------|
+| `IP6_PREFIX_FBX_0`     | The first public `/64` prefix delegated by the Freebox. We cannot use it for delegation as the Freebox server assigns itself the `::1` address. We'll pick addresses for the router itself in this block instead. |
+| `IP6_PREFIX_FBX_LAN`   | The public `/64` prefix delegated by the Freebox we'll use for the *LAN* network.   |
+| `IP6_PREFIX_FBX_VPN`   | The public `/64` prefix delegated by the Freebox we'll use for the *VPN* network.   |
+| `IP6_PREFIX_FBX_GUEST` | The public `/64` prefix delegated by the Freebox we'll use for the *GUEST* network. |
+| `IP6_ULA_PREFIX`       | The local `/48` prefix.                                                             |
+| `IP6_ULA_HINT_LAN`     | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
+| `IP6_ULA_HINT_VPN`     | The IPv6 sub prefix we'll use for the *VPN* network.                                |
+| `IP6_ULA_HINT_GUEST`   | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
+| `IP4_NET_LAN`          | The local IPv4 subnet used for the *LAN* network.                                   |
+
+
+
+
+
+
+
 
