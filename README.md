@@ -82,8 +82,16 @@ back side of the router doesn't work too.
 | `IP6_ULA_HINT_LAN`     | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
 | `IP6_ULA_HINT_VPN`     | The IPv6 sub prefix we'll use for the *VPN* network.                                |
 | `IP6_ULA_HINT_GUEST`   | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
-| `IP4_NET_LAN`          | The local IPv4 subnet used for the *LAN* network.                                   |
+| `IP4_NET_LAN`          | The local IPv4 subnet used for the *LAN* network, eg. a `192.168.x.0/24`.           |
+| `IP4_NET_VPN`          | The local IPv4 subnet used for the *VPN* network.                                   |
+| `IP4_NET_GUEST`        | The local IPv4 subnet used for the *GUEST* network.                                 |
 
+### Freebox Configuration
+* Set *Mode Réseau* to *Bridge*
+* In *Configuration IPv6*, set *Next Hop* of chosen prefixes to the **link-local** address of the router's WAN interface
+  (should be `eth0.2`).
+
+### LAN Network
 
 
 
