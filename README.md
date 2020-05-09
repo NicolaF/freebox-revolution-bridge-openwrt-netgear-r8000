@@ -64,6 +64,7 @@ make
 #### Switch LEDs control
 We can still control the other LEDs, but not the switch LEDs which blink on every packet. The LED kill switch on the back side of the router doesn't work too.
 
-__Workaround__: Duct tape
+**Workaround**: Duct tape
 #### WPS
-__Workaround__: None, and I don't care. Access to my precious Internets is worth typing a passphrase
+**Workaround**: None, and I don't care. Access to my precious Internets is worth typing a passphrase.
+
