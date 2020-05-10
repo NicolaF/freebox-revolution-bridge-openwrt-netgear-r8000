@@ -15,13 +15,12 @@ Notes on Putting a Freebox Revolution in bridge mode with a Netgear R8000 runnin
 There will be a fair amount of customization, and due to how OpenWrt's upgrade process works:
 
 * When modifying a configuration file, ensure that it will be kept during sysupgrade. Add it in `/etc/sysupgrade.conf` if needed.
-* Keep track of installed packages. I personnally do this with a file directly on the router, which will be retained during sysupgrade.
+* Keep track of installed packages, eg. this with a file directly on the router that will be retained during sysupgrade.
 * Backup your configuration regularly.
 
 ## Installing OpenWrt
 ### Problem
-Recent firmwares do not allow downgrade below 1.0.4.12_10.1.46 nor
-reinstalling the same version:
+Recent Netgear firmwares do not allow to downgrade below 1.0.4.12_10.1.46 nor reinstalling the same version:
 
 ```
 $ hexdump -Cn80 R8000-V1.0.4.12_10.1.46.chk
@@ -87,15 +86,37 @@ back side of the router doesn't work too.
 | `IP4_NET_LAN`           | The local IPv4 subnet used for the *LAN* network, eg. a `192.168.x.0/24`.           |
 | `IP4_NET_VPN`           | The local IPv4 subnet used for the *VPN* network.                                   |
 | `IP4_NET_GUEST`         | The local IPv4 subnet used for the *GUEST* network.                                 |
+| `IP6_ROUTER`            | The public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.                   |
+| `IP6_ROUTER_LAN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`. Shouldn't be needed, but OpenWrt requires an address for all "interfaces" |
+| `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
+| `IP6_ROUTER_GUEST`      | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 
-### Freebox Configuration
+### Freebox Player Configuration
+
+### Freebox Server Configuration
 * Set *Mode Réseau* to *Bridge*
 * In *Configuration IPv6*, set *Next Hop* of chosen prefixes to `<IP6_LLOCAL_ROUTER_WAN>`.
 
 ### LAN Network
+#### Configure the `wan6` interface
+* Static IPv6 addresses
+* IPv6 addresses
+* Disable IPv6 assignment length
+* Set IPv6 gateway
+* Set IPv6 routed prefix
 
+It should look like this in `/etc/config/network`:
+```
+config interface 'wan6'
+        option ifname 'eth0.2'
+        option proto 'static'
+        option ip6gw '<IP6_LLOCAL_FBX>'
+        option ip6prefix '<IP6_PREFIX_FBX_LAN>/64'
+        list ip6addr '<IP6_ROUTER>'
+        list ip6addr '<IP6_ROUTER_LAN>'
+```
 
-
+#### Configure the `lan` interface
 
 
 
