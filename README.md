@@ -236,7 +236,7 @@ By default, `dnsmasq` does not listen on unmanaged interfaces. Uncheck *Local Se
 Allow inbound connections on the VPN port
 
 #### Register a domain name for connected clients
-Configure `dnsmasq to monitor a folder for host files, and create a file in said directory upon client connection.
+Configure `dnsmasq` to monitor a folder for host files, and create a file in said directory upon client connection.
 
 * Add `hostsdir=/etc/openvpn/dnsmasq-hosts` to `/etc/dnsmasq.conf`
 * Create `/etc/openvpn/dnsmasq-hosts` and make it writeable by OpenVPN daemon
