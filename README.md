@@ -70,7 +70,7 @@ back side of the router doesn't work either.
 
 ### What works
 #### Wifi
-But we must set the country code of AC radios to US
+But we must set the country code of AC radios to US.
 #### Everything else
 
 ## Networking
@@ -79,6 +79,8 @@ But we must set the country code of AC radios to US
 ### Conventions
 | Name                    | Description                                                                         |
 |-------------------------|-------------------------------------------------------------------------------------|
+| `LOCAL_DN`              | Local domain name. May be an FQDN if you have one.                                  |
+|                         |                                                                                     |
 | `IP6_LLOCAL_FBX`        | The The Freebox Server link-local address, available in *Configuration IPv6*.       |
 | `IP6_LLOCAL_ROUTER_WAN` | The OpenWrt router link-local address, WAN-side. Should be `eth0.2`.                |
 | | |
@@ -89,21 +91,25 @@ But we must set the country code of AC radios to US
 |                         |                                                                                     |
 | `IP6_ULA_PREFIX`        | The local `/48` prefix.                                                             |
 | `IP6_ULA_HINT_LAN`      | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
-| `IP6_ULA_HINT_VPN`      | The IPv6 sub prefix we'll use for the *VPN* network.                                |
 | `IP6_ULA_HINT_GUEST`    | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
 |                         |                                                                                     |
 | `IP4_GW_LAN`            | The IPv4 gateway for the *LAN* network.                                             |
 | `IP4_NETMASK_LAN`       | The IPv4 netmask used for the *LAN* network, eg. `255.255.255.0`.                   |
+| `IP4_NET_LAN`           | The IPv4 netmask used for the *LAN* network, eg. `192.168.42.0 255.255.255.0`.     |
 | `IP4_GW_VPN`            | The IPv4 gateway for the *VPN* network.                                             |
-| `IP4_NETMASK_VPN`       | The IPv4 netmask used for the *VPN* network, eg. `255.255.255.0`.                   |
+| `IP4_GW_VPN_PTP`        | The "point to point address" of the *VPN* network IPv4 gateway.                     |
+| `IP4_NET_VPN`           | The IPv4 netmask used for the *VPN* network, eg. `192.168.42.0 255.255.255.0`.     |
 | `IP4_GW_GUEST`          | The IPv4 gateway for the *GUEST* network.                                           |
 | `IP4_NETMASK_GUEST`     | The IPv4 netmask used for the *GUEST* network, eg. `255.255.255.0`.                 |
 |                         |                                                                                     |
-| ÌP6_SUFFIX_GW_LAN`      | The IPv6 suffix we'll assign to the *LAN* network gateway, eg. `::1234`
+| `IP6_SUFFIX_GW_LAN`     | The IPv6 suffix we'll assign to the *LAN* network gateway, eg. `::1234`.            |
+| `IP6_SUFFIX_GW_VPN`     | The IPv6 suffix we'll assign to the *VPN* network gateway.                          |
+| `IP6_SUFFIX_GW_VPN_PTP` | The "point to point" IPv6 suffix we'll assign to the *VPN* network gateway.         |
+| `IP6_SUFFIX_GW_GUEST`   | The IPv6 suffix we'll assign to the *VPN* network gateway.                          |
 |                         |                                                                                     |
 | `IP6_ROUTER`            | The public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.                   |
 | `IP6_ROUTER_LAN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`. Shouldn't be needed, but OpenWrt requires an address for all "interfaces" |
-| `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
+| `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |luci-app-openvpn
 | `IP6_ROUTER_GUEST`      | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 
 ### Freebox Player Configuration
@@ -139,7 +145,111 @@ config interface 'wan6'
 #### Configure the `lan` interface
 * Static address
 * Set IPv4 and netmask
-* 
+* Set IPv6 assignment length, assignment hint, and suffix
+* Set IPv6 prefixes to use (`ip6class`, cannot be done through UI)
+  * `local`: use a /64 from our ULA prefix
+  * `wan6`: use the delegated prefix assigned to `wan6`
 
+It should look like this in `/etc/config/network`:
+```
+config interface 'lan'
+        option type 'bridge'
+        option ifname 'eth0.1'
+        option proto 'static'
+        option netmask '<IP4_NETMASK_LAN>'
+        option ipaddr '<IP4_GW_LAN>'
+        option ip6hint '<IP6_ULA_HINT_LAN>'
+        list ip6class 'local'
+        list ip6class 'wan6'
+        option ip6assign '64'
+        option ip6ifaceid '<IP6_SUFFIX_GW_LAN>'
+```
 
+### VPN Network
+#### Install OpenVPN
+```bash
+opkg update
+opkg install openvpn-openssl luci-app-openvpn
+```
 
+#### OpenVPN Configuration
+Done through OVPN file upload, to have full control. Prepare your PKI stuff and CRON job to retrieve the CRL before.
+
+```
+user nobody
+group nogroup
+script-security 2
+
+verb 3
+
+proto tcp6-server
+port <VPNport>
+keepalive 10 120
+comp-lzo
+
+dev tun
+persist-tun
+push tun-ipv6
+
+mode server
+tls-server
+persist-key
+
+ca /etc/openvpn/ca.crt
+cert /etc/openvpn/server.crt
+key /etc/openvpn/server.key
+dh dh2048.pem
+crl-verify /etc/openvpn/crl.pem
+
+ifconfig <IP4_GW_VPN> <IP4_GW_VPN_PTP>
+ifconfig-pool <first IPv4 of the VPN net> <last IP of the VPN net>
+route <IP4_NET_VPN>
+
+ifconfig-ipv6 <IP6_GW_VPN> <IP6_GW_VPN_PTP>
+ifconfig-ipv6-<IP6_PREFIX_FBX_VPN>::/64
+route-ipv6 <IP6_PREFIX_FBX_VPN>::/64
+
+push "route <IP4_NET_VPN>"
+push "route <IP4_NET_LAN>"
+push "route-ipv6 <IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64"
+push "route-ipv6 <IP6_PREFIX_FBX_LAN>::/64"
+push "route-ipv6 <IP6_PREFIX_FBX_VPN>::/64"
+
+push "dhcp-option <IP4_GW_LAN>"
+push "dhcp-option DNS <IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::<IP6_SUFFIX_GW_LAN>"
+push "dhcp-option DOMAIN <LOCAL_DN>"
+
+ifconfig-pool-persist /etc/openvpn/ipp.txt
+```
+
+#### Assign firewall zone
+* Create a new `vpn` interface
+    * Unmanaged
+    * Interface: `tun0`
+    * Firewall zone: `lan`
+
+#### Allow access to DNS
+By default, `dnsmasq` does not listen on unmanaged interfaces. Uncheck *Local Service Only* in *Network* >
+*DHCP and DNS* > *General Settings*
+
+#### Firewall
+Allow inbound connections on the VPN port
+
+#### Register a domain name for connected clients
+Configure `dnsmasq to monitor a folder for host files, and create a file in said directory upon client connection.
+
+* Add `hostsdir=/etc/openvpn/dnsmasq-hosts` to `/etc/dnsmasq.conf`
+* Create `/etc/openvpn/dnsmasq-hosts` and make it writeable by OpenVPN daemon
+* Add `client-connect /etc/openvpn/client-connect.sh`:
+* Create script:
+```bash
+#!/bin/sh
+
+# create "hosts" file for newly connected client (<cert CN>.vpn -> <ip>)
+
+cat <<EOF > /etc/openvpn/dnsmasq-hosts/"$common_name".hosts
+$ifconfig_pool_remote_ip $common_name.vpn
+$ifconfig_pool_remote_ip6 $common_name.vpn
+EOF
+exit 0
+```
