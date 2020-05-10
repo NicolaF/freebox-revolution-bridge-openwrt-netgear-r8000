@@ -72,24 +72,25 @@ back side of the router doesn't work too.
 
 ## Networking
 ### Conventions
-| Name                   | Description                                                                         |
-|------------------------|-------------------------------------------------------------------------------------|
-| `IP6_PREFIX_FBX_0`     | The first public `/64` prefix delegated by the Freebox. We cannot use it for delegation as the Freebox server assigns itself the `::1` address. We'll pick addresses for the router itself in this block instead. |
-| `IP6_PREFIX_FBX_LAN`   | The public `/64` prefix delegated by the Freebox we'll use for the *LAN* network.   |
-| `IP6_PREFIX_FBX_VPN`   | The public `/64` prefix delegated by the Freebox we'll use for the *VPN* network.   |
-| `IP6_PREFIX_FBX_GUEST` | The public `/64` prefix delegated by the Freebox we'll use for the *GUEST* network. |
-| `IP6_ULA_PREFIX`       | The local `/48` prefix.                                                             |
-| `IP6_ULA_HINT_LAN`     | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
-| `IP6_ULA_HINT_VPN`     | The IPv6 sub prefix we'll use for the *VPN* network.                                |
-| `IP6_ULA_HINT_GUEST`   | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
-| `IP4_NET_LAN`          | The local IPv4 subnet used for the *LAN* network, eg. a `192.168.x.0/24`.           |
-| `IP4_NET_VPN`          | The local IPv4 subnet used for the *VPN* network.                                   |
-| `IP4_NET_GUEST`        | The local IPv4 subnet used for the *GUEST* network.                                 |
+| Name                    | Description                                                                         |
+|-------------------------|-------------------------------------------------------------------------------------|
+| `IP6_LLOCAL_FBX`        | The The Freebox Server link-local address, available in *Configuration IPv6*.       |
+| `IP6_LLOCAL_ROUTER_WAN` | The OpenWrt router link-local address, WAN-side. Should be `eth0.2`.                |
+| `IP6_PREFIX_FBX_0`      | The first public `/64` prefix delegated by the Freebox. We cannot use it for delegation as the Freebox server assigns itself the `::1` address. We'll pick addresses for the router itself in this block instead. |
+| `IP6_PREFIX_FBX_LAN`    | The public `/64` prefix delegated by the Freebox we'll use for the *LAN* network.   |
+| `IP6_PREFIX_FBX_VPN`    | The public `/64` prefix delegated by the Freebox we'll use for the *VPN* network.   |
+| `IP6_PREFIX_FBX_GUEST`  | The public `/64` prefix delegated by the Freebox we'll use for the *GUEST* network. |
+| `IP6_ULA_PREFIX`        | The local `/48` prefix.                                                             |
+| `IP6_ULA_HINT_LAN`      | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
+| `IP6_ULA_HINT_VPN`      | The IPv6 sub prefix we'll use for the *VPN* network.                                |
+| `IP6_ULA_HINT_GUEST`    | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
+| `IP4_NET_LAN`           | The local IPv4 subnet used for the *LAN* network, eg. a `192.168.x.0/24`.           |
+| `IP4_NET_VPN`           | The local IPv4 subnet used for the *VPN* network.                                   |
+| `IP4_NET_GUEST`         | The local IPv4 subnet used for the *GUEST* network.                                 |
 
 ### Freebox Configuration
 * Set *Mode Réseau* to *Bridge*
-* In *Configuration IPv6*, set *Next Hop* of chosen prefixes to the **link-local** address of the router's WAN interface
-  (should be `eth0.2`).
+* In *Configuration IPv6*, set *Next Hop* of chosen prefixes to `<IP6_LLOCAL_ROUTER_WAN>`.
 
 ### LAN Network
 
