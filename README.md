@@ -62,7 +62,7 @@ Then install the built image as usual.
 ### What doesn't work
 #### Switch LEDs control
 We can still control the other LEDs, but not the switch LEDs which blink on every packet. The LED kill switch on the
-back side of the router doesn't work too.
+back side of the router doesn't work either.
 
 *Workaround*: Duct tape
 #### WPS
@@ -74,6 +74,8 @@ But we must set the country code of AC radios to US
 #### Everything else
 
 ## Networking
+![Network schema](net_schema.svg.drawio)
+
 ### Conventions
 | Name                    | Description                                                                         |
 |-------------------------|-------------------------------------------------------------------------------------|
@@ -84,25 +86,29 @@ But we must set the country code of AC radios to US
 | `IP6_PREFIX_FBX_LAN`    | The public `/64` prefix delegated by the Freebox we'll use for the *LAN* network.   |
 | `IP6_PREFIX_FBX_VPN`    | The public `/64` prefix delegated by the Freebox we'll use for the *VPN* network.   |
 | `IP6_PREFIX_FBX_GUEST`  | The public `/64` prefix delegated by the Freebox we'll use for the *GUEST* network. |
-| | |
+|                         |                                                                                     |
 | `IP6_ULA_PREFIX`        | The local `/48` prefix.                                                             |
 | `IP6_ULA_HINT_LAN`      | The IPv6 sub prefix we'll use for the *LAN* network. The *LAN* IPv6 block will be `<IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64`.|
 | `IP6_ULA_HINT_VPN`      | The IPv6 sub prefix we'll use for the *VPN* network.                                |
 | `IP6_ULA_HINT_GUEST`    | The IPv6 sub prefix we'll use for the *GUEST* network.                              |
-| | |
+|                         |                                                                                     |
 | `IP4_GW_LAN`            | The IPv4 gateway for the *LAN* network.                                             |
 | `IP4_NETMASK_LAN`       | The IPv4 netmask used for the *LAN* network, eg. `255.255.255.0`.                   |
 | `IP4_GW_VPN`            | The IPv4 gateway for the *VPN* network.                                             |
 | `IP4_NETMASK_VPN`       | The IPv4 netmask used for the *VPN* network, eg. `255.255.255.0`.                   |
 | `IP4_GW_GUEST`          | The IPv4 gateway for the *GUEST* network.                                           |
 | `IP4_NETMASK_GUEST`     | The IPv4 netmask used for the *GUEST* network, eg. `255.255.255.0`.                 |
-| | |
+|                         |                                                                                     |
+| ÌP6_SUFFIX_GW_LAN`      | The IPv6 suffix we'll assign to the *LAN* network gateway, eg. `::1234`
+|                         |                                                                                     |
 | `IP6_ROUTER`            | The public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.                   |
 | `IP6_ROUTER_LAN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`. Shouldn't be needed, but OpenWrt requires an address for all "interfaces" |
 | `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 | `IP6_ROUTER_GUEST`      | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 
 ### Freebox Player Configuration
+* Go to *Réglages* > *Système* > *Réseau*
+* Enable *Client DHCP en mode bridge*
 
 ### Freebox Server Configuration
 * Set *Mode Réseau* to *Bridge*
@@ -126,9 +132,14 @@ config interface 'wan6'
         list ip6addr '<IP6_ROUTER>'
         list ip6addr '<IP6_ROUTER_LAN>'
 ```
+#### Configure SSID(s)
+* Create them
+* Assign them to the `lan` network
 
 #### Configure the `lan` interface
-
+* Static address
+* Set IPv4 and netmask
+* 
 
 
 
