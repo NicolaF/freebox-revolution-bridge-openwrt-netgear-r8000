@@ -74,7 +74,8 @@ But we must set the country code of AC radios to US.
 #### Everything else
 
 ## Networking
-![Network schema](net_schema.svg)
+
+<img src="net_schema.svg" alt="Network Schema" width="100%"/>
 
 ### Conventions
 | Name                    | Description                                                                         |
