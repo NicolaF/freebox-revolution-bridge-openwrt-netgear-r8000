@@ -73,6 +73,11 @@ back side of the router doesn't work either.
 But we must set the country code of AC radios to US.
 #### Everything else
 
+## Enable HTTPS
+* Prepare PKI stuff
+* Follow [official documentation](https://openwrt.org/docs/guide-user/luci/luci.secure)
+* Comment out `listen_http` directives in `/etc/config/uhttpd`
+
 ## Networking
 
 <img src="net_schema.svg" alt="Network Schema" width="100%"/>
@@ -108,6 +113,7 @@ But we must set the country code of AC radios to US.
 | `IP6_SUFFIX_GW_VPN_PTP` | The "point to point" IPv6 suffix we'll assign to the *VPN* network gateway.         |
 | `IP6_SUFFIX_GW_GUEST`   | The IPv6 suffix we'll assign to the *VPN* network gateway.                          |
 |                         |                                                                                     |
+| `IP4_ROUTER`            | The public IPv4 for our router (assigned via DHCP).                                 |
 | `IP6_ROUTER`            | The public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.                   |
 | `IP6_ROUTER_LAN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`. Shouldn't be needed, but OpenWrt requires an address for all "interfaces" |
 | `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |luci-app-openvpn
@@ -244,7 +250,7 @@ Configure `dnsmasq` to monitor a folder for host files, and create a file in sai
 
 * Add `hostsdir=/mnt/sda1/openvpn/dnsmasq-hosts` to `/etc/dnsmasq.conf`
 * Create `/mnt/sda1/openvpn/dnsmasq-hosts` and make it writeable by OpenVPN daemon
-* Add `client-connect /etc/openvpn/client-connect.sh`:
+* Add `client-connect /etc/openvpn/client-connect.sh` to your OpenVPN configuration
 * Create script:
 ```bash
 #!/bin/sh
@@ -258,3 +264,41 @@ $ifconfig_pool_remote_ip6 $common_name.$domain
 EOF
 exit 0
 ```
+
+#### `stunnel` (with X509 client authentication)
+To encapsulate OpenVPN traffic in an innocent-looking TLS connection on TCP/443, just in case of picky corporate
+firewall.
+
+* Adjust `/etc/config/uhttpd` to only listen in HTTPS only on internal interfaces
+* Install it: `opkg install stunnel`
+* Edit `/etc/config/stunnel` to use only standard config file:
+```
+config globals 'globals'
+        option alt_config_file '/etc/stunnel/stunnel.conf'
+        option setuid 'nobody'
+        option setgid 'nogroup'
+```
+* Add configuration for IPv4 and IPv6 in `/etc/stunnel/stunnel.conf`:
+```
+[openvpn6]
+client = no
+accept = <IP6_ROUTER>:443
+connect = localhost:<VPNport>
+cert = /etc/openvpn/server.crt
+key  = /etc/openvpn/server.key
+CAfile = /etc/openvpn/ca.crt
+CRLfile = /mnt/sda1/openvpn/crl.pem
+verify = 2
+
+[openvpn4]
+client = no
+accept = <IP4_ROUTER>:443
+connect = localhost:<VPNport>
+cert = /etc/openvpn/server.crt
+key  = /etc/openvpn/server.key
+CAfile = /etc/openvpn/ca.crt
+CRLfile = /mnt/sda1/openvpn/crl.pem
+verify = 2
+```
+* Allow incoming connections on TCP 443 (IPv4 and IPv6)
+
