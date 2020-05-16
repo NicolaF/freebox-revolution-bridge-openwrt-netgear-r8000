@@ -73,10 +73,22 @@ back side of the router doesn't work either.
 But we must set the country code of AC radios to US.
 #### Everything else
 
-## Enable HTTPS
+## General configuration
+### Enable HTTPS
 * Prepare PKI stuff
 * Follow [official documentation](https://openwrt.org/docs/guide-user/luci/luci.secure)
 * Comment out `listen_http` directives in `/etc/config/uhttpd`
+
+### DHCP
+* Set a 10min lease time for all internal networks
+* Set `option ra_useleasetime '1'` in `/etc/config/dhcp` on all interfaces to avoid infinite DHCPv6 lease time for
+static leases (well, leases are technically still infinite, but the observed `renew` and `rebind` are 5min and 8min, which is OK).
+```
+config dhcp '...'
+        ...
+        option ra_useleasetime '1'
+        ...
+```
 
 ## Networking
 
@@ -401,9 +413,52 @@ config zone
   * Forward: reject
   * Covered networks: `guest`
   * Allow forward to destination zones: `wan`
-* Add rules to allow DHCP, DHCPv6 and DNS and reject a=traffic to Freebox Server:
+* Add rules to allow DHCP, DHCPv6 and DNS and reject traffic to Freebox Server:
 
 <img src="guest_fw_rules.png" alt="Guest firewall rules" width="100%"/>
 
 ## Bringing back Frebox services
-### Freebox player
+### Freebox Player
+The player must be inside the local network to "see" other devices (DLNA, ...), whil still communication with the Freebox Server. It does so using the *tagged* VLAN 100. We just need to configure the switch:
+* Plug the Freebox Player to a LAN switch port
+* Enable tagged VLAN 100 on WAN port and the Freebox Player's port:
+<img src="player_vlan.png" alt="VLAN configuration for Freebox Player" width="100%"/>
+
+### Multiposte [playlist](http://mafreebox.freebox.fr/freeboxtv/playlist.m3u)
+TV is streamed using the RTSP protocol, which negotiates (over UDP) a source and destination UDP port for video data.
+This is:
+* Not firewall friendly
+* Not NAT friendly
+
+However, there is a conntrack helper kernel module just for this:
+* Install it: `opkg install kmod-ipt-nathelper-rtsp`
+* Enable it in `sysctl.conf`
+```
+cat <<EOF >> /etc/sysctl.conf
+#enable NF contrack for Freebox RTSP
+net.netfilter.nf_conntrack_helper=1
+EOF
+```
+* Reload: `sysctl -p`
+
+### Freebox Server services announce (DLNA, SMB share,...)
+TODO
+
+Hints:
+* `smcroute`
+* `mdns-repeater`
+* `samba`
+
+## Misc
+### NAT6
+I need this for my certificate's CRLDP, so that it is accessible over IPv4 and IPv6: the certificates' CRLDP point to
+the router, and incoming requests are then forwarded to the internal machine.
+
+IPv4 port forwards can be easily configure through the interface, but for IPv6 whe need a kernel module and custom
+rules:
+* Install it: `opkg install kmod-ipt-nat6`
+* Custom firewall rules:
+```
+ip6tables -t nat -I PREROUTING -i eth0.2 -p tcp --dport 80 -j DNAT --to-destination [<local IPv6>]:80
+ip6tables -A FORWARD -i eth0.2 -p tcp --dport 80 -j ACCEPT
+```
