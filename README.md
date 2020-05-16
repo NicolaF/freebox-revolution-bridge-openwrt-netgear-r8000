@@ -203,11 +203,11 @@ dh dh2048.pem
 crl-verify /etc/openvpn/crl.pem
 
 ifconfig <IP4_GW_VPN> <IP4_GW_VPN_PTP>
-ifconfig-pool <first IPv4 of the VPN net> <last IP of the VPN net>
+ifconfig-pool <first IPv4 of the VPN net> <last IP of the VPN net> # 0 -> 250 if your GW is 254/253
 route <IP4_NET_VPN>
 
 ifconfig-ipv6 <IP6_GW_VPN> <IP6_GW_VPN_PTP>
-ifconfig-ipv6-<IP6_PREFIX_FBX_VPN>::/64
+ifconfig-ipv6-<IP6_PREFIX_FBX_VPN>::1/64  # important: ::0 is not usable
 route-ipv6 <IP6_PREFIX_FBX_VPN>::/64
 
 push "route <IP4_NET_VPN>"
