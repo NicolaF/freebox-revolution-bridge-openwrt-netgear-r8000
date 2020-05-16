@@ -443,10 +443,11 @@ EOF
 ### Freebox Server services announcements (DLNA, SMB share,...)
 TODO
 
-Hints:
-* `smcroute`
-* `mdns-repeater`
-* `samba`
+Ideas:
+* `smcroute` (general multicast repeater)
+* `mdns-repeater` (mDNS repeater)
+* `conntrackd` (userspace conntrack helper, for DLNA/SSDP)
+* `samba` (`remote announce` option)
 
 ## Misc
 ### NAT6
