@@ -182,6 +182,35 @@ opkg install openvpn-openssl luci-app-openvpn
 #### USB storage for moving parts (CRL,...)
 To avoid wearing internal storage. Follow [official instructions](https://openwrt.org/docs/guide-user/storage/usb-drives-quickstart).
 
+#### Create a `wan6vpn` interface
+* Static IPv6 addresses
+* IPv6 addresses
+* Disable IPv6 assignment length
+* Set IPv6 gateway
+* Set IPv6 routed prefix
+* Assign it to the `wan` firewall zone
+
+It should look like this in `/etc/config/network`:
+```
+config interface 'wan6'
+        option ifname 'eth0.2'
+        option proto 'static'
+        option ip6gw '<IP6_LLOCAL_FBX>'
+        option ip6prefix '<IP6_PREFIX_FBX_VPN>/64'
+        list ip6addr '<IP6_ROUTER_VPN>'
+```
+And in `/etc/config/firewall`:
+```
+config zone
+        option name 'wan'
+        option input 'REJECT'
+        option output 'ACCEPT'
+        option forward 'REJECT'
+        option masq '1'
+        option mtu_fix '1'
+        option network 'wan wan6 wan6vpn'
+```
+
 #### OpenVPN Configuration
 Done through OVPN file upload, to have full control. Prepare your PKI stuff and CRON job to retrieve the CRL before.
 
@@ -302,3 +331,79 @@ verify = 2
 ```
 * Allow incoming connections on TCP 443 (IPv4 and IPv6)
 
+### Guest network
+#### Create a `wan6guest` interface
+* Static IPv6 addresses
+* IPv6 addresses
+* Disable IPv6 assignment length
+* Set IPv6 gateway
+* Set IPv6 routed prefix
+* Assign it to the `wan` firewall zone
+
+It should look like this in `/etc/config/network`:
+```
+config interface 'wan6'
+        option ifname 'eth0.2'
+        option proto 'static'
+        option ip6gw '<IP6_LLOCAL_FBX>'
+        option ip6prefix '<IP6_PREFIX_FBX_GUEST>/64'
+        list ip6addr '<IP6_ROUTER_GUEST>'
+```
+And in `/etc/config/firewall`:
+```
+config zone
+        option name 'wan'
+        option input 'REJECT'
+        option output 'ACCEPT'
+        option forward 'REJECT'
+        option masq '1'
+        option mtu_fix '1'
+        option network 'wan wan6 wan6vpn wan6guest'
+```
+
+#### Create SSID
+* Same as usual
+* Assign it to a new `guest` network
+
+#### Configure the `guest` interface
+* Static address
+* Set IPv4 and netmask
+* Set IPv6 assignment length, assignment hint, and suffix
+* Set IPv6 prefixes to use (`ip6class`, cannot be done through UI)
+  * `local`: use a /64 from our ULA prefix
+  * `wan6guest`: use the delegated prefix assigned to `wan6guest`
+* Assign it to a new `guest` firewall zone
+
+It should look like this in `/etc/config/network`:
+```
+config interface 'guest'
+        option proto 'static' 
+        option netmask '<IP4_NETMASK_GUEST>'
+        option ipaddr '<IP4_GW_GUEST>'
+        option ip6hint '<IP6_ULA_HINT_GUEST>'
+        list ip6class 'local'
+        list ip6class 'wan6guest'
+        option ip6assign '64'
+        option ip6ifaceid '<IP6_SUFFIX_GW_GUEST>'
+```
+And in `/etc/config/firewall`:
+```
+config zone
+        option name 'guest'
+        option network 'guest'
+        ...
+```
+
+#### Firewall
+* Configure `guest` zone settings
+  * Input: reject
+  * Output: accept
+  * Forward: reject
+  * Covered networks: `guest`
+  * Allow forward to destination zones: `wan`
+* Add rules to allow DHCP, DHCPv6 and DNS and reject a=traffic to Freebox Server:
+
+<img src="guest_fw_rules.png" alt="Guest firewall rules" width="100%"/>
+
+## Bringing back Frebox services
+### Freebox player
