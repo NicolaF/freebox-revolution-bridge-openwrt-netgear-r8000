@@ -46,7 +46,7 @@ $ hexdump -Cn80 openwrt-19.07.2-bcm53xx-netgear-r8000-squashfs.chk
 
 ### Solution: build an image with a very high version number
 See [this github PR](https://github.com/openwrt/openwrt/pull/1857) (now merged)
-```
+```bash
 git clone https://github.com/openwrt/openwrt.git
 cd openwrt
 git checkout v19.07.2
@@ -70,7 +70,7 @@ back side of the router doesn't work either.
 
 ### What works
 #### Wifi
-But we must set the country code of AC radios to US.
+But we must set the country code of AC radios to *US*.
 #### Everything else
 
 ## General configuration
@@ -80,9 +80,8 @@ But we must set the country code of AC radios to US.
 * Comment out `listen_http` directives in `/etc/config/uhttpd`
 
 ### DHCP
-* Set a 10min lease time for all internal networks
-* Set `option ra_useleasetime '1'` in `/etc/config/dhcp` on all interfaces to avoid infinite DHCPv6 lease time for
-static leases (well, leases are technically still infinite, but the observed `renew` and `rebind` are 5min and 8min, which is OK).
+* Set a 10min lease time for all managed local interfaces
+* Set `option ra_useleasetime '1'` in `/etc/config/dhcp` on all managed local interfaces to avoid infinite DHCPv6 lease time for static leases (well, leases are technically still infinite, but the observed *renew* and *rebind* are 5min and 8min which is OK):
 ```
 config dhcp '...'
         ...
@@ -128,7 +127,7 @@ config dhcp '...'
 | `IP4_ROUTER`            | The public IPv4 for our router (assigned via DHCP).                                 |
 | `IP6_ROUTER`            | The public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.                   |
 | `IP6_ROUTER_LAN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`. Shouldn't be needed, but OpenWrt requires an address for all "interfaces" |
-| `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |luci-app-openvpn
+| `IP6_ROUTER_VPN`        | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 | `IP6_ROUTER_GUEST`      | An additional public IPv6 for our router, picked from `<IP6_PREFIX_FBX_0>`.         |
 
 ### Freebox Player Configuration
@@ -320,7 +319,7 @@ config globals 'globals'
         option setgid 'nogroup'
 ```
 * Add configuration for IPv4 and IPv6 in `/etc/stunnel/stunnel.conf`:
-```
+```ini
 [openvpn6]
 client = no
 accept = <IP6_ROUTER>:443
@@ -419,7 +418,7 @@ config zone
 
 ## Bringing back Frebox services
 ### Freebox Player
-The player must be inside the local network to "see" other devices (DLNA, ...), whil still communication with the Freebox Server. It does so using the *tagged* VLAN 100. We just need to configure the switch:
+The player must be inside the local network to "see" other devices (DLNA, ...), while still communicating with the Freebox Server. It does so using the *tagged* VLAN 100. We just need to configure the switch:
 * Plug the Freebox Player to a LAN switch port
 * Enable tagged VLAN 100 on WAN port and the Freebox Player's port:
 <img src="player_vlan.png" alt="VLAN configuration for Freebox Player" width="100%"/>
@@ -433,7 +432,7 @@ This is:
 However, there is a conntrack helper kernel module just for this:
 * Install it: `opkg install kmod-ipt-nathelper-rtsp`
 * Enable it in `sysctl.conf`
-```
+```bash
 cat <<EOF >> /etc/sysctl.conf
 #enable NF contrack for Freebox RTSP
 net.netfilter.nf_conntrack_helper=1
@@ -441,7 +440,7 @@ EOF
 ```
 * Reload: `sysctl -p`
 
-### Freebox Server services announce (DLNA, SMB share,...)
+### Freebox Server services announcements (DLNA, SMB share,...)
 TODO
 
 Hints:
@@ -451,14 +450,14 @@ Hints:
 
 ## Misc
 ### NAT6
-I need this for my certificate's CRLDP, so that it is accessible over IPv4 and IPv6: the certificates' CRLDP point to
+I need this for my certificates' CRLDP, so that it is accessible over IPv4 and IPv6: the certificates' CRLDP point to
 the router, and incoming requests are then forwarded to the internal machine.
 
-IPv4 port forwards can be easily configure through the interface, but for IPv6 whe need a kernel module and custom
+IPv4 port forwards can be easily configured through the interface, but for IPv6 we need a kernel module and custom
 rules:
 * Install it: `opkg install kmod-ipt-nat6`
 * Custom firewall rules:
-```
+```bash
 ip6tables -t nat -I PREROUTING -i eth0.2 -p tcp --dport 80 -j DNAT --to-destination [<local IPv6>]:80
 ip6tables -A FORWARD -i eth0.2 -p tcp --dport 80 -j ACCEPT
 ```
