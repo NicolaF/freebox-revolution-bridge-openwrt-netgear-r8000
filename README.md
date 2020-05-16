@@ -173,6 +173,9 @@ opkg update
 opkg install openvpn-openssl luci-app-openvpn
 ```
 
+#### USB storage for moving parts (CRL,...)
+To avoid wearing internal storage. Follow [official instructions](https://openwrt.org/docs/guide-user/storage/usb-drives-quickstart).
+
 #### OpenVPN Configuration
 Done through OVPN file upload, to have full control. Prepare your PKI stuff and CRON job to retrieve the CRL before.
 
@@ -200,7 +203,7 @@ ca /etc/openvpn/ca.crt
 cert /etc/openvpn/server.crt
 key /etc/openvpn/server.key
 dh dh2048.pem
-crl-verify /etc/openvpn/crl.pem
+crl-verify /mnt/sda1/openvpn/crl.pem
 
 ifconfig <IP4_GW_VPN> <IP4_GW_VPN_PTP>
 ifconfig-pool <first IPv4 of the VPN net> <last IP of the VPN net> # 0 -> 250 if your GW is 254/253
@@ -220,7 +223,7 @@ push "dhcp-option <IP4_GW_LAN>"
 push "dhcp-option DNS <IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::<IP6_SUFFIX_GW_LAN>"
 push "dhcp-option DOMAIN <LOCAL_DN>"
 
-ifconfig-pool-persist /etc/openvpn/ipp.txt
+ifconfig-pool-persist /mnt/sda1/openvpn/ipp.txt
 ```
 
 #### Assign firewall zone
@@ -239,18 +242,19 @@ Allow inbound connections on the VPN port
 #### Register a domain name for connected clients
 Configure `dnsmasq` to monitor a folder for host files, and create a file in said directory upon client connection.
 
-* Add `hostsdir=/etc/openvpn/dnsmasq-hosts` to `/etc/dnsmasq.conf`
-* Create `/etc/openvpn/dnsmasq-hosts` and make it writeable by OpenVPN daemon
+* Add `hostsdir=/mnt/sda1/openvpn/dnsmasq-hosts` to `/etc/dnsmasq.conf`
+* Create `/mnt/sda1/openvpn/dnsmasq-hosts` and make it writeable by OpenVPN daemon
 * Add `client-connect /etc/openvpn/client-connect.sh`:
 * Create script:
 ```bash
 #!/bin/sh
 
 # create "hosts" file for newly connected client (<cert CN>.vpn -> <ip>)
+domain="vpn.<LOCAL_DN>"
 
-cat <<EOF > /etc/openvpn/dnsmasq-hosts/"$common_name".hosts
-$ifconfig_pool_remote_ip $common_name.vpn
-$ifconfig_pool_remote_ip6 $common_name.vpn
+cat <<EOF > /mnt/sda1/openvpn/dnsmasq-hosts/"$common_name".hosts
+$ifconfig_pool_remote_ip $common_name.$domain
+$ifconfig_pool_remote_ip6 $common_name.$domain
 EOF
 exit 0
 ```
