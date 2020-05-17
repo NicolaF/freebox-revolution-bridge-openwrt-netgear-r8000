@@ -127,7 +127,8 @@ $RuleSet remote
 ```
 
 #### Remote `logwatch` configuration
-* See [logwatch folder](logwatch) for config (custom services & co.). Works on my machine (Debian Buster).
+* See [logwatch folder](logwatch) for config (custom services & co., covers dropbear, uhttpd/luci, openvpn and stunnel).
+\#WorksOnMyMachine (Debian Buster).
 * Cronjob: `/usr/sbin/logwatch --output mail --hostformat splitmail`
 
 
