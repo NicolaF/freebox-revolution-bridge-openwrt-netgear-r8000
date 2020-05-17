@@ -79,6 +79,58 @@ But we must set the country code of AC radios to *US*.
 * Follow [official documentation](https://openwrt.org/docs/guide-user/luci/luci.secure)
 * Comment out `listen_http` directives in `/etc/config/uhttpd`
 
+### Remote logging
+Send logs to a remote `rsyslog`, for proper reporting with logwatch
+
+#### OpenWrt configuration
+In `/etc/config/system` set remote IP, port and protocol and reload the `log` service:
+```
+config system
+        ...
+        option log_proto 'udp'
+        option log_ip '192.168.39.253'
+        option log_port '514'
+        ...
+```
+#### Remote `rsyslog` configuration
+```
+...
+
+$ModLoad imudp.so
+$InputUDPServerBindRuleset remote
+$UDPServerRun 514
+
+$RuleSet local
+<default rules go here>
+
+$DefaultRuleset local
+
+$template RemoteHost,"/var/log/hosts/%HOSTNAME%/syslog"
+$RuleSet remote
+*.* ?RemoteHost
+```
+
+#### Remote `logrotate` configuration
+```
+/var/log/hosts/<router hostname>/syslog
+{
+        rotate 7
+        daily
+        missingok
+        notifempty
+        delaycompress
+        compress
+        postrotate
+                /usr/lib/rsyslog/rsyslog-rotate
+        endscript
+}
+```
+
+#### Remote `logwatch` configuration
+* See [logwatch folder](logwatch) for config (custom services & co.)
+* Cronjob: `/usr/sbin/logwatch --output mail --hostformat splitmail`
+
+
 ### DHCP
 * Set a 10min lease time for all managed local interfaces
 * Set `option ra_useleasetime '1'` in `/etc/config/dhcp` on all managed local interfaces to avoid infinite DHCPv6 lease time for static leases (well, leases are technically still infinite, but the observed *renew* and *rebind* are 5min and 8min which is OK):

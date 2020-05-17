@@ -1,0 +1,92 @@
+use strict;
+use Logwatch ':all';
+
+my $Debug = $ENV{'LOGWATCH_DEBUG'} || 0;
+my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+
+my %Users = ();
+my %BadLogins = ();
+my %OtherList = ();
+
+while (defined(my $ThisLine = <STDIN>)) {
+   chomp($ThisLine);
+   if (($ThisLine =~ /^pam_end: NULL pam handle passed/ )
+       || ($ThisLine =~ /^exit after auth \(\S+\): Disconnect received/ )
+   ) {
+      #We Don't care about these
+   }
+   elsif ( my ($User,$Host,$Port) = ($ThisLine =~ /^password auth succeeded for '(\S+)' from ([\d\.:a-f]+):(\d+)/))
+   {
+      $Users{$User}{$Host}{"password"}++;
+   }
+   elsif ( my ($User,$Host,$Port) = ($ThisLine =~ /^pubkey auth succeeded for '(\S+)' with key md5 [0-9a-f:]+ from ([\d\.:a-f]+):(\d+)/))
+   {
+      $Users{$User}{$Host}{"pubkey"}++;
+   }
+   elsif ( my ($Host,$Port) = ($ThisLine =~ /^Child connection from ([\d\.:a-f]+):(\d+)/))
+   {
+      $Users{"(all)"}{$Host}{"(all)"}++;
+   }
+   elsif ( my ($User,$Host,$Port) = ($ThisLine =~ /^bad password attempt for '(\S+)' from ([\d\.:a-f]+):(\d+)/))
+   {
+      $BadLogins{$Host}{$User}++;
+   }
+   elsif ( my ($Host,$Port) = ($ThisLine =~ /^login attempt for nonexistent user from ([\d\.:a-f]+):(\d+)/))
+   {
+      $BadLogins{$Host}{"(nonexistent)"}++;
+   }
+   else { $OtherList{$ThisLine}++; }
+}
+
+#############################################################
+
+if (keys %BadLogins){
+   print "\nFailed logins from these:\n";
+   foreach my $ip (sort SortIP keys %BadLogins) {
+      my $name = LookupIP($ip);
+      my $totcount = 0;
+      foreach my $user (keys %{$BadLogins{$ip}}) {
+            $totcount += $BadLogins{$ip}{$user};
+      }
+      my $plural = ($totcount > 1) ? "s" : "";
+      print "   $name: $totcount time$plural\n";
+      if ($Detail >= 5) {
+         my $sort = CountOrder(%{$BadLogins{$ip}});
+         foreach my $user (sort $sort keys %{$BadLogins{$ip}}) {
+            my $val = $BadLogins{$ip}{$user};
+            my $plural = ($val > 1) ? "s" : "";
+            print "      $user: $val time$plural\n";
+         }
+      }
+   }
+}
+
+if (keys %Users) {
+   print "\nUsers logging in through dropbear:\n";
+   foreach my $user (sort {$a cmp $b} keys %Users) {
+      print "   $user:\n";
+      my $totalSort = TotalCountOrder(%{$Users{$user}}, \&SortIP);
+      foreach my $ip (sort $totalSort keys %{$Users{$user}}) {
+         my $name = LookupIP($ip);
+         if ($Detail >= 20) {
+            print "      $name:\n";
+            my $sort = CountOrder(%{$Users{$user}{$ip}});
+            foreach my $method (sort $sort keys %{$Users{$user}{$ip}}) {
+               my $val = $Users{$user}{$ip}{$method};
+               my $plural = ($val > 1) ? "s" : "";
+               print "         $method: $val time$plural\n";
+            }
+         } else {
+            my $val = (values %{$Users{$user}{$ip}})[0];
+            my $plural = ($val > 1) ? "s" : "";
+            print "      $name: $val time$plural\n";
+         }
+      }
+   }
+} 
+
+if (keys %OtherList) {
+   print "\n**Unmatched Entries**\n";
+   print "$_ : $OtherList{$_} time(s)\n" foreach keys %OtherList;
+}
+

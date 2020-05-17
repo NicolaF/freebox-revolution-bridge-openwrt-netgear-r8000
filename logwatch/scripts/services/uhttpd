@@ -1,0 +1,74 @@
+use strict;
+use Logwatch ':all';
+
+my $Debug = $ENV{'LOGWATCH_DEBUG'} || 0;
+my $Detail = $ENV{'LOGWATCH_DETAIL_LEVEL'} || 0;
+
+my %Users = ();
+my %BadLogins = ();
+my %OtherList = ();
+
+while (defined(my $ThisLine = <STDIN>)) {
+   chomp($ThisLine);
+   if ( my ($User,$Host) = ($ThisLine =~ /^luci: accepted login on \S+ for (\S+) from ([\d\.:a-f]+)/))
+   {
+      $Users{$Host}{$User}++;
+   }
+   elsif ( my ($User,$Host) = ($ThisLine =~ /^luci: failed login on \S+ for (\S+) from ([\d\.:a-f]+)/))
+   {
+      $BadLogins{$Host}{$User}++;
+   }
+   else { $OtherList{$ThisLine}++; }
+}
+
+#############################################################
+
+if (keys %BadLogins){
+   print "\nFailed logins from these:\n";
+   foreach my $ip (sort SortIP keys %BadLogins) {
+      my $name = LookupIP($ip);
+      my $totcount = 0;
+      foreach my $user (keys %{$BadLogins{$ip}}) {
+            $totcount += $BadLogins{$ip}{$user};
+      }
+      my $plural = ($totcount > 1) ? "s" : "";
+      print "   $name: $totcount time$plural\n";
+      if ($Detail >= 5) {
+         my $sort = CountOrder(%{$BadLogins{$ip}});
+         foreach my $user (sort $sort keys %{$BadLogins{$ip}}) {
+            my $val = $BadLogins{$ip}{$user};
+            my $plural = ($val > 1) ? "s" : "";
+            print "      $user: $val time$plural\n";
+         }
+      }
+   }
+}
+
+if (keys %Users){
+   print "\nSuccessful logins from these:\n";
+   foreach my $ip (sort SortIP keys %Users) {
+      my $name = LookupIP($ip);
+      my $totcount = 0;
+      foreach my $user (keys %{$Users{$ip}}) {
+            $totcount += $Users{$ip}{$user};
+      }
+      my $plural = ($totcount > 1) ? "s" : "";
+      print "   $name: $totcount time$plural\n";
+      if ($Detail >= 5) {
+         my $sort = CountOrder(%{$Users{$ip}});
+         foreach my $user (sort $sort keys %{$Users{$ip}}) {
+            my $val = $Users{$ip}{$user};
+            my $plural = ($val > 1) ? "s" : "";
+            print "      $user: $val time$plural\n";
+         }
+      }
+   }
+}
+
+
+
+if (keys %OtherList) {
+   print "\n**Unmatched Entries**\n";
+   print "$_ : $OtherList{$_} time(s)\n" foreach keys %OtherList;
+}
+
