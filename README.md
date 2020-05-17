@@ -80,7 +80,7 @@ But we must set the country code of AC radios to *US*.
 * Comment out `listen_http` directives in `/etc/config/uhttpd`
 
 ### Remote logging
-Send logs to a remote `rsyslog`, for proper reporting with logwatch
+Send logs to a remote `rsyslog`, for proper reporting with `logwatch`
 
 #### OpenWrt configuration
 In `/etc/config/system` set remote IP, port and protocol and reload the `log` service:
@@ -88,7 +88,7 @@ In `/etc/config/system` set remote IP, port and protocol and reload the `log` se
 config system
         ...
         option log_proto 'udp'
-        option log_ip '192.168.39.253'
+        option log_ip '<remote IP>'
         option log_port '514'
         ...
 ```
@@ -127,7 +127,7 @@ $RuleSet remote
 ```
 
 #### Remote `logwatch` configuration
-* See [logwatch folder](logwatch) for config (custom services & co.). Works on my machine (Debian Buster)
+* See [logwatch folder](logwatch) for config (custom services & co.). Works on my machine (Debian Buster).
 * Cronjob: `/usr/sbin/logwatch --output mail --hostformat splitmail`
 
 
