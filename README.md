@@ -79,6 +79,9 @@ But we must set the country code of AC radios to *US*.
 * Follow [official documentation](https://openwrt.org/docs/guide-user/luci/luci.secure)
 * Comment out `listen_http` directives in `/etc/config/uhttpd`
 
+### Enable firewall logging
+At least on the `wan` zone. Set a reasonable limit (I went for 10/seconds).
+
 ### Remote logging
 Send logs to a remote `rsyslog`, for proper reporting with `logwatch`
 
