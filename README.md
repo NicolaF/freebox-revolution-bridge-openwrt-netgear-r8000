@@ -127,8 +127,11 @@ $RuleSet remote
 ```
 
 #### Remote `logwatch` configuration
-* See [logwatch folder](logwatch) for config (custom services & co., covers dropbear, uhttpd/luci, openvpn and stunnel).
-\#WorksOnMyMachine (Debian Buster).
+* See [logwatch folder](logwatch) for config. \#WorksOnMyMachine (Debian Buster). Covers:
+  * SSH authentication attempts (`dropbear`)
+  * HTTP authentication attempts (`uhttpd`/LuCI)
+  * Wifi association attempts (`hostapd`)
+  * VPN connection attempts (`openvpn`, `stunnel`)
 * Cronjob: `/usr/sbin/logwatch --output mail --hostformat splitmail`
 
 
