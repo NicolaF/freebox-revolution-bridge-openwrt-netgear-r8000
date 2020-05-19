@@ -90,27 +90,36 @@ In `/etc/config/system` set remote IP, port and protocol and reload the `log` se
 ```
 config system
         ...
-        option log_proto 'udp'
+        option log_proto 'tcp'
         option log_ip '<remote IP>'
         option log_port '514'
         ...
 ```
 #### Remote `rsyslog` configuration
+On Debian we just have to create `/etc/rsyslog.d/99-remote.conf` to
+
+* Listen on TCP/514
+* Send all logs of remote hosts in `/var/log/hosts/<hostname>/syslog`
+
+It will be included just in the right place in `rsyslog.conf` to put builtin rules in the `local` ruleset defined at
+the end.
+
 ```
-...
+# Remote log collection
+# !!! Must be last in rsyslog.d!
 
-$ModLoad imudp.so
-$InputUDPServerBindRuleset remote
-$UDPServerRun 514
-
-$RuleSet local
-<default rules go here>
-
-$DefaultRuleset local
+$ModLoad imtcp.so
+$InputTCPServerBindRuleset remote
+$InputTCPServerRun 514
 
 $template RemoteHost,"/var/log/hosts/%HOSTNAME%/syslog"
 $RuleSet remote
 *.* ?RemoteHost
+
+$DefaultRuleset local
+$RuleSet local
+
+# default rules follow
 ```
 
 #### Remote `logrotate` configuration
@@ -131,6 +140,7 @@ $RuleSet remote
 
 #### Remote `logwatch` configuration
 * See [logwatch folder](logwatch) for config. \#WorksOnMyMachine (Debian Buster). Covers:
+  * Firewall (`iptables`)
   * SSH authentication attempts (`dropbear`)
   * HTTP authentication attempts (`uhttpd`/LuCI)
   * Wifi association attempts (`hostapd`)
