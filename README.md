@@ -328,11 +328,16 @@ ifconfig-ipv6 <IP6_GW_VPN> <IP6_GW_VPN_PTP>
 ifconfig-ipv6-<IP6_PREFIX_FBX_VPN>::1/64  # important: ::0 is not usable
 route-ipv6 <IP6_PREFIX_FBX_VPN>::/64
 
-push "route <IP4_NET_VPN>"
 push "route <IP4_NET_LAN>"
 push "route-ipv6 <IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::/64"
 push "route-ipv6 <IP6_PREFIX_FBX_LAN>::/64"
+
+push "route <IP4_NET_VPN>"
 push "route-ipv6 <IP6_PREFIX_FBX_VPN>::/64"
+
+push "route <IP4_NET_GUEST>"
+push "route-ipv6 <IP6_ULA_PREFIX>:<IP6_ULA_HINT_GUEST>::/64"
+push "route-ipv6 <IP6_PREFIX_FBX_GUEST>::/64"
 
 push "dhcp-option <IP4_GW_LAN>"
 push "dhcp-option DNS <IP6_ULA_PREFIX>:<IP6_ULA_HINT_LAN>::<IP6_SUFFIX_GW_LAN>"
