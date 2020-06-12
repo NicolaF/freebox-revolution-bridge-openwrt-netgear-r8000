@@ -104,10 +104,9 @@ On Debian we just have to create `/etc/rsyslog.d/99-remote.conf` to
 It will be included just in the right place in `rsyslog.conf` to put builtin rules in the `local` ruleset defined at
 the end.
 
-```
-# Remote log collection
-# !!! Must be last in rsyslog.d!
+* Create `/etc/rsyslog.d/30-enable-remote.conf`:
 
+```
 $ModLoad imtcp.so
 $InputTCPServerBindRuleset remote
 $InputTCPServerRun 514
@@ -116,11 +115,10 @@ $template RemoteHost,"/var/log/hosts/%HOSTNAME%/syslog"
 $RuleSet remote
 *.* ?RemoteHost
 
-$DefaultRuleset local
 $RuleSet local
-
 # default rules follow
 ```
+* Add `$DefaultRuleset local` in `/etc/rsyslog.conf` after default rules
 
 #### Remote `logrotate` configuration
 ```
