@@ -534,3 +534,25 @@ rules:
 ip6tables -t nat -I PREROUTING -i eth0.2 -p tcp --dport 80 -j DNAT --to-destination [<local IPv6>]:80
 ip6tables -A FORWARD -i eth0.2 -p tcp --dport 80 -j ACCEPT
 ```
+
+### Use Cloudflare DNS
+```
+uci -q delete network.wan.dns
+uci add_list network.wan.dns="1.1.1.1"
+uci add_list network.wan.dns="1.0.0.1"
+uci set network.wan.peerdns="0" 
+
+uci -q delete network.wan6.dns
+uci add_list network.wan6.dns="2606:4700:4700::1111"
+uci add_list network.wan6.dns="2606:4700:4700::1001"
+uci set network.wan6.peerdns="0"
+
+uci -q delete network.wan6guest.dns
+uci set network.wan6guest.peerdns="0"
+
+uci -q delete network.wan6vpn.dns
+uci set network.wan6vpn.peerdns="0"
+
+uci commit network
+/etc/init.d/network restart
+```
